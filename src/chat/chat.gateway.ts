@@ -9,7 +9,7 @@ import { ChatAppService } from './chat.service';
 import { Server } from 'https';
 import { Bind } from '@nestjs/common';
 
-@WebSocketGateway(8001, { cors: '*:*' })
+@WebSocketGateway({ cors: '*:*' })
 export class ChatGateway {
   @WebSocketServer()
   server: Server;

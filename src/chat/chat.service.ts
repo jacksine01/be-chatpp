@@ -17,8 +17,3 @@ export class ChatAppService {
     console.log({ data });
   }
 }
-
-
-
-
-
