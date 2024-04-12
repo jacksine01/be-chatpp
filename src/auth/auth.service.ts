@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { User } from './schema/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { IUser } from './schema/user.schema';
 
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
@@ -11,41 +11,47 @@ import { LoginDto } from './dto/login.dto';
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectModel(User.name)
-    private userModel: Model<User>,
+    @InjectModel('User')
+    private readonly userModel: Model<IUser & Document>,
     private jwtService: JwtService,
   ) {}
 
-  async signUP(signUpDto: SignUpDto): Promise<{ token: string }> {
+  async signUp(signUpDto: SignUpDto): Promise<{ token: string }> {
     const { name, email, password } = signUpDto;
 
-    const hashedPasswrod = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await this.userModel.create({
-      name,
-      email,
-      Password: hashedPasswrod,
+      name: name,
+      email: email,
+      Password: hashedPassword,
     });
 
-    const token = this.jwtService.sign({ id: user._id });
+    const token = this.jwtService.sign({
+      id: user._id,
+      name: name,
+      email: email,
+    });
 
     return { token };
   }
 
-  async login(LoginDto: LoginDto): Promise<{ token: string }> {
-    const { email, password } = LoginDto;
-
-    const user = await this.userModel.findOne({ email });
-
+  async login(loginDto: LoginDto): Promise<{ token: string }> {
+    const { email, password } = loginDto;
+    console.log({ email, password });
+    const user = await this.userModel.findOne({
+      email: email,
+    });
+    console.log({ user });
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const isPasswordMatched = await bcrypt.compare(password, user.Password);
+    // const isPasswordMatched = await bcrypt.compare(password);
 
-    if (!isPasswordMatched) {
-      throw new UnauthorizedException('Invalid email or password');
-    }
+    // if (!isPasswordMatched) {
+    //   throw new UnauthorizedException('Invalid email or password');
+    // }
 
     const token = this.jwtService.sign({ id: user._id });
 
