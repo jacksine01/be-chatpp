@@ -5,9 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as mongoose from 'mongoose';
-import { IBook } from './schemas/book.schema';
-
-import { Query } from 'express-serve-static-core';
+import { IBook } from './schemas/book.schema'; 
 
 @Injectable()
 export class BookService {
@@ -16,29 +14,29 @@ export class BookService {
     private readonly bookModel: mongoose.Model<IBook & Document>,
   ) {}
 
+  async create(book: IBook): Promise<IBook> {
+    const res = await this.bookModel.create(book);
+    return res;
+  }
+  
   async findAll(): Promise<IBook[]> {
     const books = await this.bookModel.find();
     return books;
   }
 
-  async create(book: IBook): Promise<IBook> {
-    const res = await this.bookModel.create(book);
-    return res;
-  }
-
   async findById(id: string): Promise<IBook> {
     const isValidId = mongoose.isValidObjectId(id);
-
+    
     if (!isValidId) {
       throw new BadRequestException('Please enter correct id.');
     }
-
+    
     const book = await this.bookModel.findById(id);
-
+    
     if (!book) {
       throw new NotFoundException('Book not found.');
     }
-
+    
     return book;
   }
 
