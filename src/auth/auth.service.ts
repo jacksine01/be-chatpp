@@ -24,7 +24,7 @@ export class AuthService {
     const user = await this.userModel.create({
       name: name,
       email: email,
-      Password: hashedPassword,
+      password: hashedPassword,
     });
 
     const token = this.jwtService.sign({
@@ -47,13 +47,19 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    // const isPasswordMatched = await bcrypt.compare(password);
+    const isPasswordMatched = await bcrypt.compare(password, user.password);
 
-    // if (!isPasswordMatched) {
-    //   throw new UnauthorizedException('Invalid email or password');
-    // }
+    console.log(isPasswordMatched);
 
-    const token = this.jwtService.sign({ id: user._id });
+    if (!isPasswordMatched) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    const token = this.jwtService.sign({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+    });
 
     return { token };
   }
