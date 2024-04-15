@@ -8,7 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BookModule } from './book/book.module';
-import { AuthService } from './auth/auth.service';
+import { RoomModule } from './room/room.module';
 
 @Module({
   imports: [
@@ -20,6 +20,7 @@ import { AuthService } from './auth/auth.service';
     AuthModule,
     ChatModule,
     BookModule,
+    RoomModule,
   ],
   controllers: [AppController],
   providers: [AppService, ChatGateway, ChatAppService],
