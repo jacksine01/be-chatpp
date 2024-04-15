@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BookModule } from './book/book.module';
+import { AuthService } from './auth/auth.service';
 
 @Module({
   imports: [

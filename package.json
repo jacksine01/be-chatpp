@@ -40,11 +40,13 @@
     "mongoose-delete": "^1.0.2",
     "mongoose-paginate": "^5.0.3",
     "nest": "^0.1.6",
+    "nodemailer": "^6.9.13",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
     "service": "^0.1.4",
     "users": "^2.0.0",
+    "uuid": "^9.0.1",
     "websocket": "^1.0.34"
   },
   "devDependencies": {
