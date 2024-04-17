@@ -9,6 +9,8 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BookModule } from './book/book.module';
 import { RoomModule } from './room/room.module';
+import { SocketModule } from './socket/socket.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { RoomModule } from './room/room.module';
     ChatModule,
     BookModule,
     RoomModule,
+    SocketModule,
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService, ChatGateway, ChatAppService],
