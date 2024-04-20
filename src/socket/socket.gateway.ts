@@ -2,52 +2,36 @@ import {
   WebSocketGateway,
   WebSocketServer,
   SubscribeMessage,
+  MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { SocketService } from './socket.service';
 
-@WebSocketGateway()
+
+@WebSocketGateway(8001, { cors: '*:*' })
 export class SocketGateway {
-  @WebSocketServer() server: Server;
-
-  @SubscribeMessage('subscribeToRandomNumbers')
-  handleSubscribeToRandomNumbers(client: any) {
-    // Subscribe the client to the 'randomNumbers' room
-    client.join('randomNumbers');
-  }
-
-  sendRandomNumber() {
-    // Send a random number to all clients in the 'randomNumbers' room
-    this.server
-      .to('randomNumbers')
-      .emit('randomNumber', Math.floor(Math.random() * 100) + 1);
-  }
-
-  afterInit(server: Server) {
-    // Start sending random numbers after initialization
-    setInterval(() => {
-      this.sendRandomNumber();
-    }, 1000);
-  }
-
-  @SubscribeMessage('game_controls')
-  handleGameControls(client: any) {
-    // Subscribe the client to the 'randomNumbers' room
-    // client.join('randomNumbers');
-    // bet , payout
-  }
-
+  @WebSocketServer() 
+  server: Server;
+  constructor(private readonly socketService: SocketService) {} 
   private connectedUsers: number = 0;
+  private readonly roomCode = 'my-room';
+  private enteredUsers: number = 0;
+  private timer: NodeJS.Timeout;
 
-  handleConnection(socket: Socket) {
+
+
+  handleConnection(socket: Socket , client: Socket) {
     this.connectedUsers++;
     this.updateConnectedUsers();
-    console.log('New client connected');
+    console.log(`New Client connected`);
+    this.handleSubscribeToRandomNumbers(client);
   }
 
-  handleDisconnect(socket: Socket) {
+  handleDisconnect(socket: Socket , client: Socket) {
     this.connectedUsers--;
     this.updateConnectedUsers();
-    console.log('Client disconnected');
+    console.log(`Client disconnected`);
+    this.stopSendingRandomNumbers();
   }
 
   updateConnectedUsers() {
@@ -66,14 +50,57 @@ export class SocketGateway {
     client.emit('leftRoom', room);
   }
 
-  @SubscribeMessage('sendMessage')
-  handleMessage(client: Socket, message: any) {
-    this.server.to(message.room).emit('message', message);
+  // random number room
+  @SubscribeMessage('subscribeToRandomNumbers')
+  handleSubscribeToRandomNumbers(client: Socket) {
+    this.timer = setInterval(() => {
+      const randomNumber = Math.floor(Math.random() * 100) + 1; 
+      // client.emit('randomNumber', randomNumber);
+      console.log('randomNumber is :', randomNumber);
+    }, 1000)
   }
+  private stopSendingRandomNumbers() {
+    clearInterval(this.timer);
+  }
+
+  // game_controls room
+  @SubscribeMessage('game_controls')
+  handleGameControls(
+    client: Socket,
+    data: { amount: number; payout: number },
+  ): void {
+    // bet , payout
+    console.log('Received bet data:', data);
+    const result = { success: true, message: 'Bet placed successfully' };
+    this.server
+      .to(client.rooms.values().next().value)
+      .emit('betResult', result);
+  }
+
+  @SubscribeMessage('Users')
+  handleUsers(client: Socket) {
+    client.join(this.roomCode);
+    this.enteredUsers++;
+    this.server.to(this.roomCode).emit('userEntered', this.enteredUsers);
+  
+    setTimeout(() => {
+      client.leave(this.roomCode);
+      this.enteredUsers--;
+      this.server.to(this.roomCode).emit('userEntered', this.enteredUsers);
+    }, 5000);
+  }
+
+  @SubscribeMessage('message')
+  handleMessage(@MessageBody() message: string): void {
+   this.server.emit('message', message);
+   this.socketService.saveChat(message);
+  }
+
 }
 
+
 /**
- *
+ * Total rooms:
  * random_number
  * game_controls
  * users

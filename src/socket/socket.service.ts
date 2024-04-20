@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { IChatLedger } from './chat.entity';
+import { IChatLedger } from './entities/chat.entity';
 
 @Injectable()
-export class ChatAppService {
+export class SocketService {
   constructor(
-    @InjectModel('chatledger')
+    @InjectModel('UserChat')
     private readonly CHAT_LEDGER: Model<IChatLedger & Document>,
   ) {}
 
