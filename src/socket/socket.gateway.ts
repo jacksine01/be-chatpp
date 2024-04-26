@@ -10,28 +10,24 @@ import { SocketService } from './socket.service';
 
 @WebSocketGateway(8001, { cors: '*:*' })
 export class SocketGateway {
-  @WebSocketServer() 
+  @WebSocketServer()
   server: Server;
-  constructor(private readonly socketService: SocketService) {} 
+  constructor(private readonly socketService: SocketService) {}
   private connectedUsers: number = 0;
   private readonly roomCode = 'my-room';
   private enteredUsers: number = 0;
-  private timer: NodeJS.Timeout;
 
-
-
-  handleConnection(socket: Socket , client: Socket) {
+  handleConnection(socket: Socket, client: Socket) {
     this.connectedUsers++;
     this.updateConnectedUsers();
     console.log(`New Client connected`);
     this.handleSubscribeToRandomNumbers(client);
   }
 
-  handleDisconnect(socket: Socket , client: Socket) {
+  handleDisconnect(socket: Socket, client: Socket) {
     this.connectedUsers--;
     this.updateConnectedUsers();
     console.log(`Client disconnected`);
-    this.stopSendingRandomNumbers();
   }
 
   updateConnectedUsers() {
@@ -53,14 +49,11 @@ export class SocketGateway {
   // random number room
   @SubscribeMessage('subscribeToRandomNumbers')
   handleSubscribeToRandomNumbers(client: Socket) {
-    this.timer = setInterval(() => {
-      const randomNumber = Math.floor(Math.random() * 100) + 1; 
-      // client.emit('randomNumber', randomNumber);
+    setInterval(() => {
+      const randomNumber = Math.floor(Math.random() * 100);
+      this.server.emit('subscribeToRandomNumbers', randomNumber.toString());
       console.log('randomNumber is :', randomNumber);
-    }, 1000)
-  }
-  private stopSendingRandomNumbers() {
-    clearInterval(this.timer);
+    }, 5000);
   }
 
   // game_controls room
@@ -77,12 +70,12 @@ export class SocketGateway {
       .emit('betResult', result);
   }
 
-  @SubscribeMessage('Users')
+  @SubscribeMessage('users')
   handleUsers(client: Socket) {
     client.join(this.roomCode);
     this.enteredUsers++;
     this.server.to(this.roomCode).emit('userEntered', this.enteredUsers);
-  
+
     setTimeout(() => {
       client.leave(this.roomCode);
       this.enteredUsers--;
@@ -92,12 +85,10 @@ export class SocketGateway {
 
   @SubscribeMessage('message')
   handleMessage(@MessageBody() message: string): void {
-   this.server.emit('message', message);
-   this.socketService.saveChat(message);
+    this.server.emit('message', message);
+    this.socketService.saveChat(message);
   }
-
 }
-
 
 /**
  * Total rooms:
