@@ -17,11 +17,11 @@ export class SocketGateway {
   private readonly roomCode = 'my-room';
   private enteredUsers: number = 0;
 
-  handleConnection(socket: Socket, client: Socket) {
+  handleConnection(socket: Socket, client: Socket, randomNumber: number) {
     this.connectedUsers++;
     this.updateConnectedUsers();
     console.log(`New Client connected`);
-    this.handleSubscribeToRandomNumbers(client);
+    this.handleSubscribeToRandomNumbers(randomNumber);
   }
 
   handleDisconnect(socket: Socket, client: Socket) {
@@ -48,12 +48,13 @@ export class SocketGateway {
 
   // random number room
   @SubscribeMessage('subscribeToRandomNumbers')
-  handleSubscribeToRandomNumbers(client: Socket) {
+  handleSubscribeToRandomNumbers(randomNumber: number): void {
     setInterval(() => {
       const randomNumber = Math.floor(Math.random() * 100);
       this.server.emit('subscribeToRandomNumbers', randomNumber.toString());
-      console.log('randomNumber is :', randomNumber);
-    }, 5000);
+      // console.log('randomNumber is :', randomNumber);
+      this.socketService.saveRandomNumber(randomNumber);
+    }, 10000);
   }
 
   // game_controls room

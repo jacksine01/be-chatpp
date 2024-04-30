@@ -4,10 +4,14 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { ChatSchema } from './entities/chat.entity';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SocketService } from './socket.service';
+import { RandomNumberSchema } from './entities/random-number.entity';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: 'UserChat', schema: ChatSchema }]),
+    MongooseModule.forFeature([
+      { name: 'UserChat', schema: ChatSchema },
+      { name: 'RandomNumber', schema: RandomNumberSchema },
+    ]),
 
     ScheduleModule.forRoot(),
   ],
