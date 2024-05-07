@@ -6,7 +6,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { SocketService } from './socket.service';
-
+import * as crypto from 'crypto';
 
 @WebSocketGateway(8001, { cors: '*:*' })
 export class SocketGateway {
@@ -17,14 +17,14 @@ export class SocketGateway {
   private readonly roomCode = 'my-room';
   private enteredUsers: number = 0;
 
-  handleConnection(socket: Socket, client: Socket, randomNumber: number) {
+  handleConnection(randomNumber: number, hash: String) {
     this.connectedUsers++;
     this.updateConnectedUsers();
     console.log(`New Client connected`);
-    this.handleSubscribeToRandomNumbers(randomNumber);
+    this.handleSubscribeToRandomNumbers(randomNumber, hash);
   }
 
-  handleDisconnect(socket: Socket, client: Socket) {
+  handleDisconnect() {
     this.connectedUsers--;
     this.updateConnectedUsers();
     console.log(`Client disconnected`);
@@ -34,36 +34,44 @@ export class SocketGateway {
     this.server.emit('connectedUsers', this.connectedUsers);
   }
 
-  @SubscribeMessage('joinRoom')
-  handleJoinRoom(client: Socket, room: string) {
-    client.join(room);
-    client.emit('joinedRoom', room);
-  }
+  // @SubscribeMessage('joinRoom')
+  // handleJoinRoom(client: Socket, room: string) {
+  //   client.join(room);
+  //   client.emit('joinedRoom', room);
+  // }
 
-  @SubscribeMessage('leaveRoom')
-  handleLeaveRoom(client: Socket, room: string) {
-    client.leave(room);
-    client.emit('leftRoom', room);
-  }
+  // @SubscribeMessage('leaveRoom')
+  // handleLeaveRoom(client: Socket, room: string) {
+  //   client.leave(room);
+  //   client.emit('leftRoom', room);
+  // }
 
   // random number room
   @SubscribeMessage('subscribeToRandomNumbers')
-  handleSubscribeToRandomNumbers(randomNumber: number): void {
+  handleSubscribeToRandomNumbers(randomNumber: number, hash: String): void {
     setInterval(() => {
       const randomNumber = Math.floor(Math.random() * 100);
-      this.server.emit('subscribeToRandomNumbers', randomNumber.toString());
-      // console.log('randomNumber is :', randomNumber);
-      this.socketService.saveRandomNumber(randomNumber);
-    }, 10000);
+
+      const randomData = crypto.randomBytes(16);
+      const hash = crypto.createHash('sha256');
+      hash.update(randomData);
+      const hashHex = hash.digest('hex');
+
+      this.server.emit(
+        'subscribeToRandomNumbers',
+        randomNumber.toString(),
+        hashHex.toString(),
+      );
+      this.socketService.saveRandomNumber(randomNumber, hashHex);
+    }, 4000);
   }
 
   // game_controls room
   @SubscribeMessage('game_controls')
   handleGameControls(
     client: Socket,
-    data: { amount: number; payout: number },
+    data: { betAmount: string; payoutNumber: string },
   ): void {
-    // bet , payout
     console.log('Received bet data:', data);
     const result = { success: true, message: 'Bet placed successfully' };
     this.server
@@ -81,7 +89,7 @@ export class SocketGateway {
       client.leave(this.roomCode);
       this.enteredUsers--;
       this.server.to(this.roomCode).emit('userEntered', this.enteredUsers);
-    }, 5000);
+    }, 7000);
   }
 
   @SubscribeMessage('message')

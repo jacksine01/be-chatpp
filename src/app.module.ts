@@ -8,7 +8,6 @@ import { BookModule } from './book/book.module';
 import { SocketModule } from './socket/socket.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { SocketService } from './socket/socket.service';
-
 @Module({
   imports: [
     ConfigModule.forRoot({
